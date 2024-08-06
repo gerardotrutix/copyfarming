@@ -1,6 +1,10 @@
 # 🏗 Copy Farming
 
-🧪 A Web3 app to automatically copy the positions of experienced crypto farmers 
+Copy yield farmer traders
+
+# How it works
+
+Choose the 
 
 ⚙️ Built using NextJS, Uniswap V3 Sdk 
 

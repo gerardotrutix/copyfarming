@@ -41,5 +41,10 @@
   "packageManager": "yarn@3.2.3",
   "engines": {
     "node": ">=18.17.0"
+  },
+  "dependencies": {
+    "@urql/core": "^5.0.5",
+    "axios": "^1.7.3",
+    "urql": "^4.1.0"
   }
 }
