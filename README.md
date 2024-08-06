@@ -1,9 +1,8 @@
-# 🏗 Copy Framing
+# 🏗 Copy Farming
 
-🧪 A Web3 app to copy the positions of professional copy experienced crypto farmers 
+🧪 A Web3 app to automatically copy the positions of experienced crypto farmers 
 
-⚙️ Built using NextJS, Uniswap V3 Sdk
-
+⚙️ Built using NextJS, Uniswap V3 Sdk 
 
 
 ## Quickstart
