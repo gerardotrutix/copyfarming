@@ -45,6 +45,7 @@
   "dependencies": {
     "@urql/core": "^5.0.5",
     "axios": "^1.7.3",
+    "thirdweb": "^5.44.0",
     "urql": "^4.1.0"
   }
 }

@@ -4,7 +4,9 @@ import { useEffect } from "react";
 import { useState } from "react";
 import { cacheExchange, fetchExchange } from "@urql/core";
 import type { NextPage } from "next";
+import { ConnectButton, ConnectEmbed, useActiveAccount } from "thirdweb/react";
 import { createClient, gql } from "urql";
+import { thirdWebClient } from "~~/app/client";
 
 const STATE_OPPORTUNITIES = 0;
 const STATE_INVESTMENTS = 1;
@@ -108,8 +110,12 @@ const Home: NextPage = () => {
     });
   }, []);
 
+  const account = useActiveAccount();
+
   return (
     <>
+      <ConnectEmbed client={thirdWebClient}></ConnectEmbed>
+      {account && <ConnectButton client={thirdWebClient}></ConnectButton>}
       <div role="tablist" className="tabs tabs-boxed">
         <a
           role="tab"
