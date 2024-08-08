@@ -1,6 +1,6 @@
 import "@rainbow-me/rainbowkit/styles.css";
 import { ThirdwebProvider } from "thirdweb/react";
-import { ScaffoldEthAppWithProviders } from "~~/components/ScaffoldEthAppWithProviders";
+//import { ScaffoldEthAppWithProviders } from "~~/components/ScaffoldEthAppWithProviders";
 import { ThemeProvider } from "~~/components/ThemeProvider";
 import "~~/styles/globals.css";
 import { getMetadata } from "~~/utils/scaffold-eth/getMetadata";
@@ -16,7 +16,8 @@ const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
       <body>
         <ThemeProvider enableSystem>
           <ThirdwebProvider>
-            <ScaffoldEthAppWithProviders>{children}</ScaffoldEthAppWithProviders>
+            {children}
+            {/**<ScaffoldEthAppWithProviders></ScaffoldEthAppWithProviders>**/}
           </ThirdwebProvider>
         </ThemeProvider>
       </body>

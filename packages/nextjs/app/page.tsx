@@ -4,7 +4,11 @@ import { useEffect } from "react";
 import { useState } from "react";
 import { cacheExchange, fetchExchange } from "@urql/core";
 import type { NextPage } from "next";
+import { toWei } from "thirdweb";
+import { getContract, prepareContractCall } from "thirdweb";
+import { sepolia } from "thirdweb/chains";
 import { ConnectButton, ConnectEmbed, useActiveAccount } from "thirdweb/react";
+import { useSendTransaction } from "thirdweb/react";
 import { createClient, gql } from "urql";
 import { thirdWebClient } from "~~/app/client";
 
@@ -71,6 +75,28 @@ async function getResults() {
 
 // Define a Card component to display each position
 const Card = ({ position }: { position: any }) => {
+  const { mutate: sendTransaction, isPending } = useSendTransaction();
+
+  const onStartCopying = async () => {
+    console.log("Copying position");
+    console.log(isPending);
+
+    const contract = getContract({
+      client: thirdWebClient,
+      chain: sepolia,
+      address: "0xe306a371917E7e17759FCd7b5905C0624aF2e215",
+    });
+
+    const transaction = prepareContractCall({
+      contract: contract,
+      method: "function mint(address to)",
+      params: ["0xe306a371917E7e17759FCd7b5905C0624aF2e215"],
+      value: toWei("0.001"),
+    });
+
+    sendTransaction(transaction);
+  };
+
   return (
     <div className="card bg-base-100 w-96 shadow-xl p-2">
       <div className="card-body">
@@ -92,7 +118,9 @@ const Card = ({ position }: { position: any }) => {
         <p>Transaction Timestamp: {new Date(position.transaction.timestamp * 1000).toLocaleString()}</p>
         **/}
         <div className="card-actions justify-end">
-          <button className="btn btn-primary">Copy Position</button>
+          <button className="btn btn-primary" onClick={onStartCopying}>
+            Copy Position
+          </button>
         </div>
       </div>
     </div>
@@ -114,7 +142,7 @@ const Home: NextPage = () => {
 
   return (
     <>
-      <ConnectEmbed client={thirdWebClient}></ConnectEmbed>
+      <ConnectEmbed client={thirdWebClient} chain={sepolia}></ConnectEmbed>
       {account && <ConnectButton client={thirdWebClient}></ConnectButton>}
       <div role="tablist" className="tabs tabs-boxed">
         <a
@@ -143,7 +171,7 @@ const Home: NextPage = () => {
 
       {selectedTab === STATE_INVESTMENTS && (
         <div className="card-container">
-          <p>Caca</p>
+          <p>You don&apos;t have any copied position</p>
         </div>
       )}
     </>
