@@ -17,8 +17,14 @@ export default function Page() {
 
   return (
     <>
-      <h1>Hello, Next.js!</h1>
-      <ConnectEmbed client={thirdWebClient} chain={sepolia}></ConnectEmbed>
+      <div className="background">
+        <h1 className="font-h1">
+          Let the best Copy Farming <br></br> Trade for you
+        </h1>
+        <div className="flex justify-center items-center h-screen">
+          <ConnectEmbed client={thirdWebClient} chain={sepolia}></ConnectEmbed>
+        </div>
+      </div>
     </>
   );
 }

@@ -13,7 +13,7 @@ import { useSendTransaction } from "thirdweb/react";
 import { createClient, gql } from "urql";
 import { thirdWebClient } from "~~/app/client";
 
-const STATE_OPPORTUNITIES = 0;
+const STATE_VAULTS = 0;
 const STATE_INVESTMENTS = 1;
 
 const client = createClient({
@@ -40,6 +40,29 @@ const DATA_QUERY_OPORTUNITIES = gql`
     }
   }
 `;
+
+const mockVaultsData = {
+  availableVaults: [
+    {
+      vaultId: 1,
+      wallet: "0x0a25C91209a158D0a4922837cdd590aCe0D13f0d",
+      moneyAdded: 50000,
+      expectedAPR: 60,
+      minimumInvestment: 250,
+      strategy: "Yield Farming on Uniswap",
+      vaultFee: 50,
+    },
+    {
+      vaultId: 2,
+      wallet: "0x1b35D91310b269E1b6033847fef701bD1f1E14f1",
+      moneyAdded: 100000,
+      expectedAPR: 4.8,
+      minimumInvestment: 500,
+      strategy: "Yield Farming on Uniswap",
+      vaultFee: 50,
+    },
+  ],
+};
 
 /**
 let MY_WALLET= "0x0a25C91209a158D0a4922837cdd590aCe0D13f0d"
@@ -75,7 +98,7 @@ async function getResults() {
 }
 
 // Define a Card component to display each position
-const Card = ({ position }: { position: any }) => {
+const CardInvestments = ({ position }: { position: any }) => {
   const { mutate: sendTransaction, isPending } = useSendTransaction();
 
   const onStartCopying = async () => {
@@ -128,9 +151,54 @@ const Card = ({ position }: { position: any }) => {
   );
 };
 
+// Define a Card component to display each position
+const CardVaults = ({ vault }: { vault: any }) => {
+  const { mutate: sendTransaction, isPending } = useSendTransaction();
+
+  const onStartCopying = async () => {
+    console.log("Copying position");
+    console.log(isPending);
+
+    const contract = getContract({
+      client: thirdWebClient,
+      chain: sepolia,
+      address: "0xe306a371917E7e17759FCd7b5905C0624aF2e215",
+    });
+
+    const transaction = prepareContractCall({
+      contract: contract,
+      method: "function mint(address to)",
+      params: ["0xe306a371917E7e17759FCd7b5905C0624aF2e215"],
+      value: toWei("0.001"),
+    });
+
+    sendTransaction(transaction);
+  };
+
+  return (
+    <div className="card bg-base-100 w-96 shadow-xl mb-20 mt-10">
+      <div className="card-body">
+        <h2 className="card-title">Vault # {vault.vaultId}</h2>
+        <p>Expected APR {vault.expectedAPR}%</p>
+        <p>Minimun Invest: {vault.minimumInvestment}</p>
+        <p>Strategy: {vault.strategy}</p>
+        <p>Vault fee: {vault.vaultFee}%</p>
+        {/**
+        <p>Transaction Timestamp: {new Date(position.transaction.timestamp * 1000).toLocaleString()}</p>
+        **/}
+        <div className="card-actions justify-end">
+          <button className="btn btn-primary" onClick={onStartCopying}>
+            Invest
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Home: NextPage = () => {
   const [positions, setPositions] = useState<any[]>([]);
-  const [selectedTab, setSelectedTab] = useState<number>(STATE_OPPORTUNITIES);
+  const [selectedTab, setSelectedTab] = useState<number>(STATE_VAULTS);
 
   useEffect(() => {
     console.log("hellooo");
@@ -165,8 +233,8 @@ const Home: NextPage = () => {
               mode: "fund_wallet",
               // Provide FundWalletOptions related configuration here
               // For example:
-              buyWithCrypto: false,
-              buyWithFiat: false,
+              //buyWithCrypto: false,
+              //buyWithFiat: false,
             },
           }}
         ></ConnectButton>
@@ -174,8 +242,8 @@ const Home: NextPage = () => {
       <div role="tablist" className="tabs tabs-lifted">
         <a
           role="tab"
-          className={`tab ${selectedTab === STATE_OPPORTUNITIES ? "tab-active" : ""}`}
-          onClick={() => setSelectedTab(STATE_OPPORTUNITIES)}
+          className={`tab ${selectedTab === STATE_VAULTS ? "tab-active" : ""}`}
+          onClick={() => setSelectedTab(STATE_VAULTS)}
         >
           Opportunities
         </a>
@@ -188,17 +256,32 @@ const Home: NextPage = () => {
         </a>
       </div>
 
-      {selectedTab === STATE_OPPORTUNITIES && (
+      {selectedTab === STATE_VAULTS && (
         <div className="card-container">
-          {positions.map(position => (
-            <Card key={position.id} position={position} />
-          ))}
+          <ul>
+            {mockVaultsData.availableVaults.map(vault => (
+              <li key={vault.vaultId}>
+                <CardVaults key={vault.vaultId} vault={vault} />
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
       {selectedTab === STATE_INVESTMENTS && (
-        <div className="card-container">
-          <p>You don&apos;t have any copied position</p>
+        <div>
+          {positions.length == 0 && (
+            <div className="card-container">
+              <p>You don&apos;t have any copied position</p>
+            </div>
+          )}
+          {positions.length != 0 && (
+            <div className="card-container">
+              {positions.map(position => (
+                <CardInvestments key={position.id} position={position} />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </>
