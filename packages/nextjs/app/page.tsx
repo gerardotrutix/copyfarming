@@ -21,31 +21,11 @@ const client = createClient({
   exchanges: [cacheExchange, fetchExchange],
 });
 
-const DATA_QUERY_OPORTUNITIES = gql`
-  query MyQuery {
-    positions(where: { owner: "0x0a25C91209a158D0a4922837cdd590aCe0D13f0d" }) {
-      id
-      collectedFeesToken0
-      collectedFeesToken1
-      depositedToken0
-      depositedToken1
-      liquidity
-      collectedToken0
-      collectedToken1
-      withdrawnToken0
-      withdrawnToken1
-      transaction {
-        timestamp
-      }
-    }
-  }
-`;
-
 const mockVaultsData = {
   availableVaults: [
     {
       vaultId: 1,
-      wallet: "0x0a25C91209a158D0a4922837cdd590aCe0D13f0d",
+      wallet: "0xe306a371917E7e17759FCd7b5905C0624aF2e215",
       moneyAdded: 50000,
       expectedAPR: 60,
       minimumInvestment: 250,
@@ -54,12 +34,29 @@ const mockVaultsData = {
     },
     {
       vaultId: 2,
-      wallet: "0x1b35D91310b269E1b6033847fef701bD1f1E14f1",
+      wallet: "0xe306a371917E7e17759FCd7b5905C0624aF2e215",
       moneyAdded: 100000,
       expectedAPR: 4.8,
       minimumInvestment: 500,
       strategy: "Yield Farming on Uniswap",
       vaultFee: 50,
+    },
+  ],
+};
+
+const mockInvestmenstData = {
+  investments: [
+    {
+      investmentId: 1,
+      investor: "0xe306a371917E7e17759FCd7b5905C0624aF2e215",
+      moneyInvested: 1000,
+      vaultId: 1,
+    },
+    {
+      investmentId: 1,
+      investor: "0xe306a371917E7e17759FCd7b5905C0624aF2e215",
+      moneyInvested: 2000,
+      vaultId: 1,
     },
   ],
 };
@@ -89,16 +86,89 @@ const DATA_QUERY_INVESTMENTS = gql`
 `;
 */
 
-async function getResults() {
-  const result = await client.query(DATA_QUERY_OPORTUNITIES, {}).toPromise();
+interface Investment {
+  liquidity: number;
+  fees: number;
+  apr: number;
+  vaultId: number;
+  pnl: number;
+}
 
-  console.log(result.data);
+interface WalletVaultInfo {
+  vaultId: number;
+  wallet: string;
+}
 
-  return result;
+async function getCurrentInvestments() {
+  //const investmentsFromUniswap = await client.query(DATA_QUERY_OPORTUNITIES, {}).toPromise();
+
+  // Get the wallets that have invested in the vaults
+  const walletsInvested: WalletVaultInfo[] = [];
+  mockInvestmenstData.investments.forEach(investment => {
+    mockVaultsData.availableVaults.forEach(vault => {
+      if (investment.vaultId == vault.vaultId) {
+        const walletVaultInfo: WalletVaultInfo = {
+          vaultId: investment.vaultId,
+          wallet: investment.investor,
+        };
+        walletsInvested.push(walletVaultInfo);
+      }
+    });
+  });
+
+  const myInvestments: Investment[] = [];
+  walletsInvested.forEach(async walletVaultInfo => {
+    const DATA_QUERY_OPORTUNITIES = gql`
+  query MyQuery {
+    positions(where: { owner: "${walletVaultInfo.wallet}"}) {
+      id
+      collectedFeesToken0
+      collectedFeesToken1
+      depositedToken0
+      depositedToken1
+      liquidity
+      collectedToken0
+      collectedToken1
+      withdrawnToken0
+      withdrawnToken1
+      transaction {
+        timestamp
+      }
+      token1 {
+       symbol
+       id
+      }
+      token0 {
+       symbol
+      id
+    }
+    }
+  }
+`;
+
+    const investmentsFromUniswap = await client.query(DATA_QUERY_OPORTUNITIES, {}).toPromise();
+
+    let liquidity = 0;
+    let fees = 0;
+    investmentsFromUniswap.data.positions.forEach((position: any) => {
+      liquidity += position.liquidity;
+      fees += position.collectedFeesToken0 + position.collectedFeesToken1;
+    });
+    const myInvestment: Investment = {
+      liquidity: liquidity, // Example value for liquidity
+      fees: fees, // Example value for fees
+      apr: 8.5, // Example value for APR (Annual Percentage Rate)
+      vaultId: walletVaultInfo.vaultId, // Example value for Vault ID
+      pnl: 250, // Example value for PnL (Profit and Loss)
+    };
+    myInvestments.push(myInvestment);
+  });
+
+  return myInvestments;
 }
 
 // Define a Card component to display each position
-const CardInvestments = ({ position }: { position: any }) => {
+const CardInvestments = ({ investment }: { investment: Investment }) => {
   const { mutate: sendTransaction, isPending } = useSendTransaction();
 
   const onStartCopying = async () => {
@@ -124,26 +194,19 @@ const CardInvestments = ({ position }: { position: any }) => {
   return (
     <div className="card bg-base-100 w-96 shadow-xl p-2">
       <div className="card-body">
-        <h2 className="card-title">{position.id}</h2>
-        <p>Collected Fees Token 0: {position.collectedFeesToken0}</p>
-        <p>Collected Fees Token 1: {position.collectedFeesToken1}</p>
-        <p>Deposited Token 0: {position.depositedToken0}</p>
-        <p>Deposited Token 1: {position.depositedToken1}</p>
-        <p>Liquidity: {position.liquidity}</p>
-        <p>Collected Token 0: {position.collectedToken0}</p>
-        <p>Collected Token 1: {position.collectedToken1}</p>
-        <p>Withdrawn Token 0: {position.withdrawnToken0}</p>
-        <p>Withdrawn Token 1: {position.withdrawnToken1}</p>
+        <h2 className="card-title">Vault #{investment.vaultId}</h2>
+        <p>Current APR: {investment.apr}</p>
+        <p>Liquidity: {investment.liquidity}</p>
+        <p>Pnl: {investment.pnl}</p>
         {/**
-       
-        
-      
-      
         <p>Transaction Timestamp: {new Date(position.transaction.timestamp * 1000).toLocaleString()}</p>
         **/}
         <div className="card-actions justify-end">
           <button className="btn btn-primary" onClick={onStartCopying}>
-            Copy Position
+            Close Position
+          </button>
+          <button className="btn btn-primary" onClick={onStartCopying}>
+            Collect fees
           </button>
         </div>
       </div>
@@ -197,13 +260,12 @@ const CardVaults = ({ vault }: { vault: any }) => {
 };
 
 const Home: NextPage = () => {
-  const [positions, setPositions] = useState<any[]>([]);
+  const [investments, setInvestments] = useState<Investment[]>([]);
   const [selectedTab, setSelectedTab] = useState<number>(STATE_VAULTS);
 
   useEffect(() => {
-    console.log("hellooo");
-    getResults().then(results => {
-      setPositions(results.data.positions);
+    getCurrentInvestments().then(results => {
+      setInvestments(results);
     });
   }, []);
 
@@ -270,15 +332,15 @@ const Home: NextPage = () => {
 
       {selectedTab === STATE_INVESTMENTS && (
         <div>
-          {positions.length == 0 && (
+          {investments.length == 0 && (
             <div className="card-container">
               <p>You don&apos;t have any copied position</p>
             </div>
           )}
-          {positions.length != 0 && (
+          {investments.length != 0 && (
             <div className="card-container">
-              {positions.map(position => (
-                <CardInvestments key={position.id} position={position} />
+              {investments.map(investment => (
+                <CardInvestments key={investment.vaultId} investment={investment} />
               ))}
             </div>
           )}
