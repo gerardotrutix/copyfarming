@@ -2,12 +2,13 @@
 
 import { useEffect } from "react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { cacheExchange, fetchExchange } from "@urql/core";
 import type { NextPage } from "next";
 import { toWei } from "thirdweb";
 import { getContract, prepareContractCall } from "thirdweb";
 import { sepolia } from "thirdweb/chains";
-import { ConnectButton, ConnectEmbed, useActiveAccount } from "thirdweb/react";
+import { ConnectButton, useActiveAccount } from "thirdweb/react";
 import { useSendTransaction } from "thirdweb/react";
 import { createClient, gql } from "urql";
 import { thirdWebClient } from "~~/app/client";
@@ -140,11 +141,37 @@ const Home: NextPage = () => {
 
   const account = useActiveAccount();
 
+  useEffect(() => {
+    if (account == undefined) {
+      onDisconnect();
+    }
+  }, [account]);
+
+  const router = useRouter();
+
+  const onDisconnect = () => {
+    router.push("/login", { scroll: false });
+  };
+
   return (
     <>
-      <ConnectEmbed client={thirdWebClient} chain={sepolia}></ConnectEmbed>
-      {account && <ConnectButton client={thirdWebClient}></ConnectButton>}
-      <div role="tablist" className="tabs tabs-boxed">
+      {account && (
+        <ConnectButton
+          client={thirdWebClient}
+          onDisconnect={onDisconnect}
+          detailsModal={{
+            showTestnetFaucet: false,
+            payOptions: {
+              mode: "fund_wallet",
+              // Provide FundWalletOptions related configuration here
+              // For example:
+              buyWithCrypto: false,
+              buyWithFiat: false,
+            },
+          }}
+        ></ConnectButton>
+      )}
+      <div role="tablist" className="tabs tabs-lifted">
         <a
           role="tab"
           className={`tab ${selectedTab === STATE_OPPORTUNITIES ? "tab-active" : ""}`}
