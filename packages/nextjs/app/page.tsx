@@ -41,6 +41,15 @@ const mockVaultsData = {
       strategy: "Yield Farming on Uniswap",
       vaultFee: 50,
     },
+    {
+      vaultId: 3,
+      wallet: "0xe306a371917E7e17759FCd7b5905C0624aF2e215",
+      moneyAdded: 100000,
+      expectedAPR: 4.8,
+      minimumInvestment: 500,
+      strategy: "Yield Farming on Uniswap",
+      vaultFee: 50,
+    },
   ],
 };
 
@@ -53,38 +62,31 @@ const mockInvestmenstData = {
       vaultId: 1,
     },
     {
-      investmentId: 1,
+      investmentId: 3,
+      investor: "0xe306a371917E7e17759FCd7b5905C0624aF2e215",
+      moneyInvested: 1000,
+      vaultId: 1,
+    },
+    {
+      investmentId: 3,
+      investor: "0xe306a371917E7e17759FCd7b5905C0624aF2e215",
+      moneyInvested: 250,
+      vaultId: 1,
+    },
+    {
+      investmentId: 3,
+      investor: "0xe306a371917E7e17759FCd7b5905C0624aF2e215",
+      moneyInvested: 40000,
+      vaultId: 1,
+    },
+    {
+      investmentId: 2,
       investor: "0xe306a371917E7e17759FCd7b5905C0624aF2e215",
       moneyInvested: 2000,
-      vaultId: 1,
+      vaultId: 2,
     },
   ],
 };
-
-/**
-let MY_WALLET= "0x0a25C91209a158D0a4922837cdd590aCe0D13f0d"
-
- 
-const DATA_QUERY_INVESTMENTS = gql`
-  query MyQuery {
-    positions(where: { owner: "${MY_WALLET}" }) {
-      id
-      collectedFeesToken0
-      collectedFeesToken1
-      depositedToken0
-      depositedToken1
-      liquidity
-      collectedToken0
-      collectedToken1
-      withdrawnToken0
-      withdrawnToken1
-      transaction {
-        timestamp
-      }
-    }
-  }
-`;
-*/
 
 interface Investment {
   liquidity: number;
@@ -92,6 +94,7 @@ interface Investment {
   apr: number;
   vaultId: number;
   pnl: number;
+  moneyInvested: number;
 }
 
 interface WalletVaultInfo {
@@ -103,21 +106,47 @@ async function getCurrentInvestments() {
   //const investmentsFromUniswap = await client.query(DATA_QUERY_OPORTUNITIES, {}).toPromise();
 
   // Get the wallets that have invested in the vaults
-  const walletsInvested: WalletVaultInfo[] = [];
-  mockInvestmenstData.investments.forEach(investment => {
-    mockVaultsData.availableVaults.forEach(vault => {
-      if (investment.vaultId == vault.vaultId) {
-        const walletVaultInfo: WalletVaultInfo = {
-          vaultId: investment.vaultId,
-          wallet: investment.investor,
-        };
-        walletsInvested.push(walletVaultInfo);
-      }
-    });
+  const totalInvestmentPerVault: WalletVaultInfo[] = [];
+  const moneyInvestedByVaultMap = new Map<number, number>();
+
+  const vaultIdToWalletMap = new Map<number, string>();
+
+  // Populate the map with data from mockVaultsData
+  mockVaultsData.availableVaults.forEach(vault => {
+    vaultIdToWalletMap.set(vault.vaultId, vault.wallet);
   });
 
+  mockInvestmenstData.investments.forEach(investment => {
+    // Check if the vault already has an entry in the map
+    if (!moneyInvestedByVaultMap.has(investment.vaultId)) {
+      // If not, initialize the map entry with the current investment amount
+      moneyInvestedByVaultMap.set(investment.vaultId, investment.moneyInvested);
+
+      // Create a new WalletVaultInfo and push it to the result array
+      const walletVaultInfo: WalletVaultInfo = {
+        vaultId: investment.vaultId,
+        wallet: vaultIdToWalletMap.get(investment.vaultId) ?? "0x0",
+      };
+      totalInvestmentPerVault.push(walletVaultInfo);
+    } else {
+      // If the vault already has an entry, update the total investment
+      const currentInvestment = moneyInvestedByVaultMap.get(investment.vaultId) ?? 0;
+      const totalMoney = currentInvestment + investment.moneyInvested;
+
+      // Update the map with the new total
+      moneyInvestedByVaultMap.set(investment.vaultId, totalMoney);
+    }
+  });
+
+  // Optional: Log the results for debugging
+  moneyInvestedByVaultMap.forEach((value, key) => {
+    console.log(`Vault ID: ${key}, Total Money: ${value}`);
+  });
+
+  console.log("wallets invested: " + JSON.stringify(totalInvestmentPerVault, null, 2));
+
   const myInvestments: Investment[] = [];
-  walletsInvested.forEach(async walletVaultInfo => {
+  totalInvestmentPerVault.forEach(async walletVaultInfo => {
     const DATA_QUERY_OPORTUNITIES = gql`
   query MyQuery {
     positions(where: { owner: "${walletVaultInfo.wallet}"}) {
@@ -160,6 +189,7 @@ async function getCurrentInvestments() {
       apr: 8.5, // Example value for APR (Annual Percentage Rate)
       vaultId: walletVaultInfo.vaultId, // Example value for Vault ID
       pnl: 250, // Example value for PnL (Profit and Loss)
+      moneyInvested: moneyInvestedByVaultMap.get(walletVaultInfo.vaultId) ?? 0,
     };
     myInvestments.push(myInvestment);
   });
@@ -196,8 +226,9 @@ const CardInvestments = ({ investment }: { investment: Investment }) => {
       <div className="card-body">
         <h2 className="card-title">Vault #{investment.vaultId}</h2>
         <p>Current APR: {investment.apr}</p>
-        <p>Liquidity: {investment.liquidity}</p>
+        <p>Liquidity: $ {investment.liquidity} USD</p>
         <p>Pnl: {investment.pnl}</p>
+        <p>Your money invested: $ {investment.moneyInvested} USD</p>
         {/**
         <p>Transaction Timestamp: {new Date(position.transaction.timestamp * 1000).toLocaleString()}</p>
         **/}
