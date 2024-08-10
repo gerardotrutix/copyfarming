@@ -177,14 +177,15 @@ async function getCurrentInvestments() {
 
     const investmentsFromUniswap = await client.query(DATA_QUERY_OPORTUNITIES, {}).toPromise();
 
-    let liquidity = 0;
+    let liquidity = BigInt(0);
     let fees = 0;
     investmentsFromUniswap.data.positions.forEach((position: any) => {
       liquidity += position.liquidity;
       fees += position.collectedFeesToken0 + position.collectedFeesToken1;
+      position.token0.symbol;
     });
     const myInvestment: Investment = {
-      liquidity: liquidity, // Example value for liquidity
+      liquidity: (convertWeiToEth(liquidity) * 2598) / 1000, // Example value for liquidity
       fees: fees, // Example value for fees
       apr: 8.5, // Example value for APR (Annual Percentage Rate)
       vaultId: walletVaultInfo.vaultId, // Example value for Vault ID
@@ -195,6 +196,13 @@ async function getCurrentInvestments() {
   });
 
   return myInvestments;
+}
+
+function convertWeiToEth(weiAmount: bigint): number {
+  // 1 ETH = 10^18 wei
+  const ethAmount = Number(weiAmount) / 1e18;
+
+  return ethAmount;
 }
 
 // Define a Card component to display each position
@@ -226,16 +234,16 @@ const CardInvestments = ({ investment }: { investment: Investment }) => {
       <div className="card-body">
         <h2 className="card-title">Vault #{investment.vaultId}</h2>
         <p>Current APR: {investment.apr}</p>
-        <p>Liquidity: $ {investment.liquidity} USD</p>
+        <p>Liquidity: $ {investment.liquidity.toFixed(3)} USD</p>
         <p>Pnl: {investment.pnl}</p>
-        <p>Your money invested: $ {investment.moneyInvested} USD</p>
+        <p>Initial Investment: $ {investment.moneyInvested} USD</p>
         {/**
         <p>Transaction Timestamp: {new Date(position.transaction.timestamp * 1000).toLocaleString()}</p>
         **/}
         <div className="card-actions justify-end">
-          <button className="btn btn-primary" onClick={onStartCopying}>
+          {/**<button className="btn btn-primary" onClick={onStartCopying}>
             Close Position
-          </button>
+          </button>**/}
           <button className="btn btn-primary" onClick={onStartCopying}>
             Collect fees
           </button>
