@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { cacheExchange, fetchExchange } from "@urql/core";
 import type { NextPage } from "next";
 import { toWei } from "thirdweb";
-import { getContract, prepareContractCall} from "thirdweb";
+import { getContract, prepareContractCall } from "thirdweb";
 import { baseSepolia } from "thirdweb/chains";
 import { ConnectButton, useActiveAccount } from "thirdweb/react";
 import { useSendTransaction } from "thirdweb/react";
@@ -236,12 +236,12 @@ const CardInvestments = ({ investment }: { investment: Investment }) => {
   };
 
   return (
-    <div className="card bg-base-100 w-96 shadow-xl p-2">
+    <div className="card bg-base-100 shadow-xl m-10">
       <div className="card-body">
         <h2 className="card-title">Vault #{investment.vaultId} - @camilosaka</h2>
-        <p>Current APR: {investment.apr}</p>
+        <p>Current APR: {investment.apr} %</p>
         <p>Liquidity: $ {investment.liquidity.toFixed(3)} USD</p>
-        <p>Pnl: {investment.pnl}</p>
+        <p>Pnl: $ {investment.pnl} USD</p>
         <p>Initial Investment: $ {investment.moneyInvested} USD</p>
         {/**
         <p>Transaction Timestamp: {new Date(position.transaction.timestamp * 1000).toLocaleString()}</p>
@@ -284,7 +284,7 @@ const CardVaults = ({ vault }: { vault: any }) => {
   };
 
   return (
-    <div className="card bg-base-100 w-96 shadow-xl mb-20 mt-10">
+    <div className="card bg-base-100 shadow-xl m-10">
       <div className="card-body">
         <h2 className="card-title">Vault # {vault.vaultId} - @camilosaka</h2>
         <p>Expected APR {vault.expectedAPR}%</p>
@@ -362,22 +362,24 @@ const Home: NextPage = () => {
   return (
     <>
       {account && (
-        <ConnectButton
-          client={thirdWebClient}
-          onDisconnect={onDisconnect}
-          detailsModal={{
-            showTestnetFaucet: false,
-            payOptions: {
-              mode: "fund_wallet",
-              // Provide FundWalletOptions related configuration here
-              // For example:
-              //buyWithCrypto: false,
-              //buyWithFiat: false,
-            },
-          }}
-        ></ConnectButton>
+        <div className="mt-5 pl-2">
+          <ConnectButton
+            client={thirdWebClient}
+            onDisconnect={onDisconnect}
+            detailsModal={{
+              showTestnetFaucet: false,
+              payOptions: {
+                mode: "fund_wallet",
+                // Provide FundWalletOptions related configuration here
+                // For example:
+                //buyWithCrypto: false,
+                //buyWithFiat: false,
+              },
+            }}
+          ></ConnectButton>
+        </div>
       )}
-      <div role="tablist" className="tabs tabs-lifted">
+      <div role="tablist" className="tabs tabs-lifted mt-5">
         <a
           role="tab"
           className={`tab ${selectedTab === STATE_VAULTS ? "tab-active" : ""}`}
@@ -392,36 +394,35 @@ const Home: NextPage = () => {
         >
           Investments
         </a>
-      </div>
-
-      {selectedTab === STATE_VAULTS && (
-        <div className="card-container">
-          <ul>
-            {mockVaultsData.availableVaults.map(vault => (
-              <li key={vault.vaultId}>
-                <CardVaults key={vault.vaultId} vault={vault} />
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {selectedTab === STATE_INVESTMENTS && (
-        <div>
-          {investments.length == 0 && (
-            <div className="card-container">
-              <p>You don&apos;t have any copied position</p>
-            </div>
-          )}
-          {investments.length != 0 && (
-            <div className="card-container">
-              {investments.map(investment => (
-                <CardInvestments key={investment.vaultId} investment={investment} />
+      </div >
+        {selectedTab === STATE_VAULTS && (
+          <div className="card-container">
+            <ul>
+              {mockVaultsData.availableVaults.map(vault => (
+                <li key={vault.vaultId}>
+                  <CardVaults key={vault.vaultId} vault={vault} />
+                </li>
               ))}
-            </div>
-          )}
-        </div>
-      )}
+            </ul>
+          </div>
+        )}
+
+        {selectedTab === STATE_INVESTMENTS && (
+          <div>
+            {investments.length == 0 && (
+              <div className="card-container">
+                <p>You don&apos;t have any copied position</p>
+              </div>
+            )}
+            {investments.length != 0 && (
+              <div className="card-container">
+                {investments.map(investment => (
+                  <CardInvestments key={investment.vaultId} investment={investment} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
     </>
   );
 };
