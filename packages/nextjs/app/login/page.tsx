@@ -22,21 +22,21 @@ export default function Page() {
                     <h1 className="font-h1">
                         Let
                     </h1>
-                    <h1 className="font-h1">
-                        The best crypto farmers
+                    <h1 className="gradient-text">
+                        the best crypto investors
                     </h1>
                     <h1 className="font-h1">
-                        Farm for you
+                        invest for you
                     </h1>
                 </div>
                 <div className="title-container">
                     <h1 className="font-h2">
-                        Earn profits copying the best crypto farmers
+                        We help people to access the best descentralized finance (DeFi) investment opportunities 
                     </h1>
                 </div>
                 <div className="title-container">
                     <h1 className="font-h2">
-                    <b>Sign in and get money now: </b>
+                    <b>Sign in and earn money now: </b>
                         <br></br>
                         <br></br>
                     </h1>

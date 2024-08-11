@@ -15,6 +15,9 @@ import { thirdWebClient } from "~~/app/client";
 //import { useReadContract } from "thirdweb/react";
 import { useReadContract } from 'wagmi';
 import externalContracts from "~~/contracts/externalContracts";
+import { getAccount } from "wagmi/actions";
+import { sendTransaction } from "thirdweb"
+import { TransactionHash } from "./blockexplorer/_components";
 
 
 const STATE_VAULTS = 0;
@@ -62,19 +65,7 @@ const mockInvestmenstData = {
     {
       investmentId: 1,
       investor: "0xe306a371917E7e17759FCd7b5905C0624aF2e215",
-      moneyInvested: 1000,
-      vaultId: 1,
-    },
-    {
-      investmentId: 3,
-      investor: "0xe306a371917E7e17759FCd7b5905C0624aF2e215",
-      moneyInvested: 1000,
-      vaultId: 1,
-    },
-    {
-      investmentId: 3,
-      investor: "0xe306a371917E7e17759FCd7b5905C0624aF2e215",
-      moneyInvested: 250,
+      moneyInvested: 0,
       vaultId: 1,
     },
     {
@@ -229,7 +220,7 @@ const CardInvestments = ({ investment }: { investment: Investment }) => {
       contract: contract,
       method: "function mint(address to)",
       params: ["0xe306a371917E7e17759FCd7b5905C0624aF2e215"],
-      value: toWei("0.001"),
+      value: BigInt(1000),
     });
 
     sendTransaction(transaction);
@@ -240,9 +231,11 @@ const CardInvestments = ({ investment }: { investment: Investment }) => {
       <div className="card-body">
         <h2 className="card-title">Vault #{investment.vaultId} - @camilosaka</h2>
         <p>Current APR: {investment.apr} %</p>
-        <p>Liquidity: $ {investment.liquidity.toFixed(3)} USD</p>
-        <p>Pnl: $ {investment.pnl} USD</p>
-        <p>Initial Investment: $ {investment.moneyInvested} USD</p>
+        {/**<p>Liquidity: $ {investment.liquidity.toFixed(3)} USD</p>**/}
+        {<p>Liquidity: $ 250 USD</p>}
+        {/**<p>Pnl: $ {investment.pnl} USD</p>**/}
+        {<p>Pnl: $ {0} USD</p>}
+        <p>Initial Investment: $ 250 USD</p>
         {/**
         <p>Transaction Timestamp: {new Date(position.transaction.timestamp * 1000).toLocaleString()}</p>
         **/}
@@ -261,46 +254,88 @@ const CardInvestments = ({ investment }: { investment: Investment }) => {
 
 // Define a Card component to display each position
 const CardVaults = ({ vault }: { vault: any }) => {
-  const { mutate: sendTransaction, isPending } = useSendTransaction();
+  const { mutate: sendTransaction1, isPending } = useSendTransaction({
+    payModal: {
+      supportedTokens: {
+        "84532": [
+          {
+            address: "0x7de9a0c146Cc6A92F2592C5E4e2331B263De88B1",
+            name: "USDC",
+            symbol: "MUSDC",
+            icon: 'https://assets.coingecko.com/coins/images/9956/small/Badge_Dai.png?1687143508',
+          },
+        ],
+      },
+    },
+  });
+
+  const account = useActiveAccount();
+  console.log("account" + account);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
+
 
   const onStartCopying = async () => {
     console.log("Copying position");
     console.log(isPending);
 
-    const contract = getContract({
+    /*const contract = getContract({
       client: thirdWebClient,
       chain: baseSepolia,
       address: "0xe306a371917E7e17759FCd7b5905C0624aF2e215",
     });
 
-    const transaction = prepareContractCall({
-      contract: contract,
-      method: "function mint(address to)",
-      params: ["0xe306a371917E7e17759FCd7b5905C0624aF2e215"],
-      value: toWei("0.00001"),
+  */
+    const contract = getContract({
+      client: thirdWebClient,
+      chain: baseSepolia,
+      address: "0x7de9a0c146Cc6A92F2592C5E4e2331B263De88B1",
     });
 
-    sendTransaction(transaction);
+    const transaction = prepareContractCall({
+      contract: contract,
+      method: "function transfer(address to, uint256 value)",
+      params: ["0xe306a371917E7e17759FCd7b5905C0624aF2e215", BigInt(100000000)],
+      //value: toWei("0.00001"),
+    });
+
+    /*const { transactionHash } = await sendTransaction({
+      account,
+      transaction
+    });*/
+
+
+    const { transactionHash } = await sendTransaction({
+      account,
+      transaction
+    });
+    console.log(transactionHash)
   };
 
   return (
-    <div className="card bg-base-100 shadow-xl m-10">
-      <div className="card-body">
-        <h2 className="card-title">Vault # {vault.vaultId} - @camilosaka</h2>
-        <p>Expected APR {vault.expectedAPR}%</p>
-        <p>Minimun Invest: $ {vault.minimumInvestment} USD</p>
-        <p>Strategy: {vault.strategy}</p>
-        <p>Vault fee: {vault.vaultFee}%</p>
-        {/**
+    <>
+      <div className="card bg-base-100 shadow-xl m-10">
+        <div className="card-body">
+          <h2 className="card-title">Vault # {vault.vaultId} - @camilosaka</h2>
+          <p>Expected APR {vault.expectedAPR}%</p>
+          <p>Minimum Investment: $ {vault.minimumInvestment} USD</p>
+          <p>Strategy: {vault.strategy}</p>
+          <p>Vault fee: {vault.vaultFee}%</p>
+          {/**
         <p>Transaction Timestamp: {new Date(position.transaction.timestamp * 1000).toLocaleString()}</p>
         **/}
-        <div className="card-actions justify-end">
-          <button className="btn btn-primary" onClick={onStartCopying}>
-            Invest
-          </button>
+          <div className="card-actions justify-end">
+            <button className="btn btn-primary" onClick={onStartCopying}>
+              Invest
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </>
+
   );
 };
 
@@ -365,7 +400,20 @@ const Home: NextPage = () => {
         <div className="mt-5 pl-2">
           <ConnectButton
             client={thirdWebClient}
+
             onDisconnect={onDisconnect}
+            chain={baseSepolia}
+            supportedTokens={{
+              // when connected to "Base" mainnet - show balance of DAI stablecoin
+              84532: [
+                {
+                  address: '0x7de9a0c146Cc6A92F2592C5E4e2331B263De88B1', // token contract address
+                  name: 'USDC',
+                  symbol: 'USDT',
+                  icon: 'https://assets.coingecko.com/coins/images/9956/small/Badge_Dai.png?1687143508',
+                },
+              ],
+            }}
             detailsModal={{
               showTestnetFaucet: false,
               payOptions: {
@@ -377,7 +425,7 @@ const Home: NextPage = () => {
               },
             }}
           ></ConnectButton>
-        </div>
+        </div >
       )}
       <div role="tablist" className="tabs tabs-lifted mt-5">
         <a
@@ -395,7 +443,8 @@ const Home: NextPage = () => {
           Investments
         </a>
       </div >
-        {selectedTab === STATE_VAULTS && (
+      {
+        selectedTab === STATE_VAULTS && (
           <div className="card-container">
             <ul>
               {mockVaultsData.availableVaults.map(vault => (
@@ -405,9 +454,11 @@ const Home: NextPage = () => {
               ))}
             </ul>
           </div>
-        )}
+        )
+      }
 
-        {selectedTab === STATE_INVESTMENTS && (
+      {
+        selectedTab === STATE_INVESTMENTS && (
           <div>
             {investments.length == 0 && (
               <div className="card-container">
@@ -422,7 +473,8 @@ const Home: NextPage = () => {
               </div>
             )}
           </div>
-        )}
+        )
+      }
     </>
   );
 };
