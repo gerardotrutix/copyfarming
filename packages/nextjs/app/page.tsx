@@ -6,12 +6,16 @@ import { useRouter } from "next/navigation";
 import { cacheExchange, fetchExchange } from "@urql/core";
 import type { NextPage } from "next";
 import { toWei } from "thirdweb";
-import { getContract, prepareContractCall } from "thirdweb";
-import { sepolia } from "thirdweb/chains";
+import { getContract, prepareContractCall} from "thirdweb";
+import { baseSepolia } from "thirdweb/chains";
 import { ConnectButton, useActiveAccount } from "thirdweb/react";
 import { useSendTransaction } from "thirdweb/react";
 import { createClient, gql } from "urql";
 import { thirdWebClient } from "~~/app/client";
+//import { useReadContract } from "thirdweb/react";
+import { useReadContract } from 'wagmi';
+import externalContracts from "~~/contracts/externalContracts";
+
 
 const STATE_VAULTS = 0;
 const STATE_INVESTMENTS = 1;
@@ -104,6 +108,8 @@ interface WalletVaultInfo {
 
 async function getCurrentInvestments() {
   //const investmentsFromUniswap = await client.query(DATA_QUERY_OPORTUNITIES, {}).toPromise();
+
+  //getCurrentVaults();
 
   // Get the wallets that have invested in the vaults
   const totalInvestmentPerVault: WalletVaultInfo[] = [];
@@ -215,7 +221,7 @@ const CardInvestments = ({ investment }: { investment: Investment }) => {
 
     const contract = getContract({
       client: thirdWebClient,
-      chain: sepolia,
+      chain: baseSepolia,
       address: "0xe306a371917E7e17759FCd7b5905C0624aF2e215",
     });
 
@@ -232,7 +238,7 @@ const CardInvestments = ({ investment }: { investment: Investment }) => {
   return (
     <div className="card bg-base-100 w-96 shadow-xl p-2">
       <div className="card-body">
-        <h2 className="card-title">Vault #{investment.vaultId}</h2>
+        <h2 className="card-title">Vault #{investment.vaultId} - @camilosaka</h2>
         <p>Current APR: {investment.apr}</p>
         <p>Liquidity: $ {investment.liquidity.toFixed(3)} USD</p>
         <p>Pnl: {investment.pnl}</p>
@@ -263,7 +269,7 @@ const CardVaults = ({ vault }: { vault: any }) => {
 
     const contract = getContract({
       client: thirdWebClient,
-      chain: sepolia,
+      chain: baseSepolia,
       address: "0xe306a371917E7e17759FCd7b5905C0624aF2e215",
     });
 
@@ -271,7 +277,7 @@ const CardVaults = ({ vault }: { vault: any }) => {
       contract: contract,
       method: "function mint(address to)",
       params: ["0xe306a371917E7e17759FCd7b5905C0624aF2e215"],
-      value: toWei("0.001"),
+      value: toWei("0.00001"),
     });
 
     sendTransaction(transaction);
@@ -280,9 +286,9 @@ const CardVaults = ({ vault }: { vault: any }) => {
   return (
     <div className="card bg-base-100 w-96 shadow-xl mb-20 mt-10">
       <div className="card-body">
-        <h2 className="card-title">Vault # {vault.vaultId}</h2>
+        <h2 className="card-title">Vault # {vault.vaultId} - @camilosaka</h2>
         <p>Expected APR {vault.expectedAPR}%</p>
-        <p>Minimun Invest: {vault.minimumInvestment}</p>
+        <p>Minimun Invest: $ {vault.minimumInvestment} USD</p>
         <p>Strategy: {vault.strategy}</p>
         <p>Vault fee: {vault.vaultFee}%</p>
         {/**
@@ -301,6 +307,36 @@ const CardVaults = ({ vault }: { vault: any }) => {
 const Home: NextPage = () => {
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [selectedTab, setSelectedTab] = useState<number>(STATE_VAULTS);
+
+  const {
+    data: result,
+  } = useReadContract({
+    address: "0x5C96c04768a5BeA3D2509342A2ac5a78bAe4143C",
+    abi: externalContracts[84532]?.[0]?.contracts.CopyFarming.abi,
+    functionName: "getVaultsList",
+    chainId: baseSepolia.id,
+  });
+
+  const vaultList = result?.map((item: any) => ({
+    vaultId: BigInt(item.vaultId),
+    startDate: BigInt(item.startDate),
+    state: item.state, // Assuming the state is returned as an integer or enum
+    moneyAdded: BigInt(item.moneyAdded),
+    expectedAPR: BigInt(item.expectedAPR),
+    minimumInvestment: BigInt(item.minimumInvestment),
+    strategy: item.strategy,
+    vaultFee: BigInt(item.vaultFee),
+    trader: {
+      traderWallet: item.trader.traderWallet,
+      nickname: item.trader.nickname,
+    },
+    investors: BigInt(item.investors),
+    moneyEarned: BigInt(item.moneyEarned),
+    moneyClaimed: BigInt(item.moneyClaimed),
+  }));
+
+  console.log(vaultList);
+
 
   useEffect(() => {
     getCurrentInvestments().then(results => {
@@ -321,6 +357,7 @@ const Home: NextPage = () => {
   const onDisconnect = () => {
     router.push("/login", { scroll: false });
   };
+
 
   return (
     <>
