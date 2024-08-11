@@ -56,14 +56,9 @@ const mockInvestmenstData = {
     {
       investmentId: 1,
       investor: "0xe306a371917E7e17759FCd7b5905C0624aF2e215",
-      moneyInvested: 250,
+      moneyInvested: 500,
       vaultId: 1,
-    },
-    {
-      investmentId: 2,
-      investor: "0xe306a371917E7e17759FCd7b5905C0624aF2e215",
-      moneyInvested: 250,
-      vaultId: 2,
+      earnedFees: 50,
     },
   ],
 };
@@ -220,7 +215,7 @@ const CardInvestments = ({ investment }: { investment: Investment }) => {
         {<p>Initial Investment: {investment.moneyInvested} USDC</p>}
         {/**<p>Pnl: $ {investment.pnl} USD</p>**/}
        
-        {<p>Earned fees: $ {0} USDC</p>}
+        {<p>Earned fees: $ {50} USDC</p>}
         {<p>Claimed fees: $ {0} USDC</p>}
         {<p>PnL: $ {0} USDC</p>}
         {/**
