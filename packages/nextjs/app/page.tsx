@@ -43,18 +43,9 @@ const mockVaultsData = {
       vaultId: 2,
       wallet: "0xe306a371917E7e17759FCd7b5905C0624aF2e215",
       moneyAdded: 100000,
-      expectedAPR: 4.8,
-      minimumInvestment: 500,
-      strategy: "Yield Farming on Uniswap",
-      vaultFee: 50,
-    },
-    {
-      vaultId: 3,
-      wallet: "0xe306a371917E7e17759FCd7b5905C0624aF2e215",
-      moneyAdded: 100000,
-      expectedAPR: 4.8,
-      minimumInvestment: 500,
-      strategy: "Yield Farming on Uniswap",
+      expectedAPR: 80,
+      minimumInvestment: 250,
+      strategy: "Yield Farming on Meteora",
       vaultFee: 50,
     },
   ],
@@ -65,19 +56,13 @@ const mockInvestmenstData = {
     {
       investmentId: 1,
       investor: "0xe306a371917E7e17759FCd7b5905C0624aF2e215",
-      moneyInvested: 0,
-      vaultId: 1,
-    },
-    {
-      investmentId: 3,
-      investor: "0xe306a371917E7e17759FCd7b5905C0624aF2e215",
-      moneyInvested: 40000,
+      moneyInvested: 250,
       vaultId: 1,
     },
     {
       investmentId: 2,
       investor: "0xe306a371917E7e17759FCd7b5905C0624aF2e215",
-      moneyInvested: 2000,
+      moneyInvested: 250,
       vaultId: 2,
     },
   ],
@@ -230,19 +215,22 @@ const CardInvestments = ({ investment }: { investment: Investment }) => {
     <div className="card bg-base-100 shadow-xl m-10">
       <div className="card-body">
         <h2 className="card-title">Vault #{investment.vaultId} - @camilosaka</h2>
-        <p>Current APR: {investment.apr} %</p>
+     
         {/**<p>Liquidity: $ {investment.liquidity.toFixed(3)} USD</p>**/}
-        {<p>Liquidity: $ 250 USD</p>}
+        {<p>Initial Investment: {investment.moneyInvested} USDC</p>}
         {/**<p>Pnl: $ {investment.pnl} USD</p>**/}
-        {<p>Pnl: $ {0} USD</p>}
-        <p>Initial Investment: $ 250 USD</p>
+       
+        {<p>Earned fees: $ {0} USDC</p>}
+        {<p>Claimed fees: $ {0} USDC</p>}
+        {<p>PnL: $ {0} USDC</p>}
         {/**
         <p>Transaction Timestamp: {new Date(position.transaction.timestamp * 1000).toLocaleString()}</p>
         **/}
         <div className="card-actions justify-end">
-          {/**<button className="btn btn-primary" onClick={onStartCopying}>
+           <p>You can close position on Aug 30</p>
+          {<button className="btn btn-primary" onClick={onStartCopying} disabled>
             Close Position
-          </button>**/}
+          </button>}
           <button className="btn btn-primary" onClick={onStartCopying}>
             Collect fees
           </button>
@@ -298,7 +286,7 @@ const CardVaults = ({ vault }: { vault: any }) => {
     const transaction = prepareContractCall({
       contract: contract,
       method: "function transfer(address to, uint256 value)",
-      params: ["0xe306a371917E7e17759FCd7b5905C0624aF2e215", BigInt(100000000)],
+      params: ["0x2170bc5E5eeb2bbF3172AbF2716D8BBB729D2ab6", BigInt(250000000)],
       //value: toWei("0.00001"),
     });
 
@@ -321,7 +309,7 @@ const CardVaults = ({ vault }: { vault: any }) => {
         <div className="card-body">
           <h2 className="card-title">Vault # {vault.vaultId} - @camilosaka</h2>
           <p>Expected APR {vault.expectedAPR}%</p>
-          <p>Minimum Investment: $ {vault.minimumInvestment} USD</p>
+          <p>Minimum Investment: $ {vault.minimumInvestment} USDC</p>
           <p>Strategy: {vault.strategy}</p>
           <p>Vault fee: {vault.vaultFee}%</p>
           {/**
